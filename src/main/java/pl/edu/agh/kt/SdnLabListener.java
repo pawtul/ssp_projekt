@@ -2,6 +2,7 @@ package pl.edu.agh.kt;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Random;
 
 import org.projectfloodlight.openflow.protocol.OFMessage;
 import org.projectfloodlight.openflow.protocol.OFPacketIn;
@@ -55,15 +56,37 @@ public class SdnLabListener implements IFloodlightModule, IOFMessageListener {
 		// sending PacketOut
 		OFPacketIn pin = (OFPacketIn) msg;
 		OFPort outPort = OFPort.of(0);
-		if (pin.getInPort() == OFPort.of(1)) {
-			outPort = OFPort.of(2);
-		} else
-			outPort = OFPort.of(1);
+
+		// rozdzielanie ruchu
+		outPort = OFPort.of(this.dispatch());
+
+		// if (pin.getInPort() == OFPort.of(1)) {
+		// outPort = OFPort.of(2);
+		// } else
+		// outPort = OFPort.of(1);
 
 		Flows.simpleAdd(sw, pin, cntx, outPort);
 		Flows.sendPacketOut(sw);
 
 		return Command.STOP;
+		// return Command.CONTINUE;
+	}
+
+	public int dispatch() {
+		/*
+		 * wybiera na jaki port przescac pakiet
+		 */
+		Random rn = new Random();
+		// max to 100
+		int max = 100;
+		int port_1 = rn.nextInt(0) % max;
+		int port_2 = rn.nextInt(0) % max;
+		int outPort = -1;
+		if (port_1 <= port_2)
+			outPort = 1;
+		else
+			outPort = 2;
+		return outPort;
 	}
 
 	@Override
