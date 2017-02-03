@@ -66,18 +66,21 @@ public class SdnLabListener implements IFloodlightModule, IOFMessageListener {
 		// sending PacketOut
 		OFPacketIn pin = (OFPacketIn) msg;
 		OFPort outPort = OFPort.of(0);
-		// rozdzielanie ruchu
+		// // rozdzielanie ruchu
+		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
 		if (pin.getInPort() == OFPort.of(3) || pin.getInPort() == OFPort.of(4) || pin.getInPort() == OFPort.of(5)
 				|| pin.getInPort() == OFPort.of(6)) {
 			outPort = OFPort.of(this.dispatch());
-		}
-		else{
-			Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
-			if (eth.getEtherType() == EthType.IPv4){
-				IPv4 ip = (IPv4) eth.getPayload();
-				IPv4Address dstIp = ip.getDestinationAddress();
-				outPort = OFPort.of(Hosts.get(dstIp));
-			}
+			Flows.simpleAdd(sw, pin, cntx, outPort);
+			Flows.sendPacketOut(sw);
+			return Command.STOP;
+		} else {
+//			IPv4 ip = (IPv4) eth.getPayload();
+//			IPv4Address dstIp = ip.getDestinationAddress();
+//			outPort = OFPort.of(Hosts.get(dstIp));
+//			Flows.simpleAdd(sw, pin, cntx, outPort);
+//			Flows.sendPacketOut(sw);
+//			return Command.STOP;
 			return Command.CONTINUE;
 		}
 
@@ -85,12 +88,12 @@ public class SdnLabListener implements IFloodlightModule, IOFMessageListener {
 		// outPort = OFPort.of(2);
 		// } else
 		// outPort = OFPort.of(1);
-//
-		Flows.simpleAdd(sw, pin, cntx, outPort);
-		Flows.sendPacketOut(sw);
+		//
+		// Flows.simpleAdd(sw, pin, cntx, outPort);
+		// Flows.sendPacketOut(sw);
 
-		return Command.STOP;
-		// return Command.CONTINUE;
+		// return Command.STOP;
+//		return Command.CONTINUE;
 	}
 
 	public int dispatch() {
@@ -102,7 +105,7 @@ public class SdnLabListener implements IFloodlightModule, IOFMessageListener {
 		int max = 100;
 		int load1 = rn.nextInt(100) % max;
 		int load2 = rn.nextInt(100) % max;
-		logger.info("Load1 is equal {}% load2 is equal {}%",load1, load2);
+		logger.info("Load1 is equal {}% load2 is equal {}%", load1, load2);
 		int outPort = 1;
 		if (load1 <= load2)
 			outPort = 1;
