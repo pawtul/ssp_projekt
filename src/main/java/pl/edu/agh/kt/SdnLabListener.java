@@ -64,7 +64,7 @@ public class SdnLabListener implements IFloodlightModule, IOFMessageListener {
 		Hosts.put(IPv4Address.of("10.0.0.4"), 4);
 		Hosts.put(IPv4Address.of("10.0.0.5"), 5);
 		Hosts.put(IPv4Address.of("10.0.0.6"), 6);
-		
+
 		Map<IPv4Address, String> MACs = new HashMap();
 		MACs.put(IPv4Address.of("10.0.0.1"), "00:00:00:00:00:01");
 		MACs.put(IPv4Address.of("10.0.0.2"), "00:00:00:00:00:02");
@@ -80,46 +80,58 @@ public class SdnLabListener implements IFloodlightModule, IOFMessageListener {
 
 		// sending PacketOut
 		OFPacketIn pin = (OFPacketIn) msg;
-		OFPort outPort = OFPort.of(0);
+		logger.info("------------------------");
+		logger.info(msg.toString());
+		logger.info("------------------------");
+//		OFPort outPort = OFPort.of(0);
 		// // rozdzielanie ruchu
 		// TODO rozdzielis na ARP i IPv4
 		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
-//		if (pin.getInPort() == OFPort.of(3) || pin.getInPort() == OFPort.of(4) || pin.getInPort() == OFPort.of(5)
-//				|| pin.getInPort() == OFPort.of(6)) {
-//			outPort = OFPort.of(this.dispatch());
-//			final IPv4 iPv4Packet = (IPv4) eth.getPayload();
-//            final IPv4Address iPv4DestinationAddress = iPv4Packet.getDestinationAddress();
-//			Flows.simpleAdd(sw, pin, cntx, outPort);
-//			Flows.sendPacketOut(sw);
-//			return Command.STOP;
-//		} else {
-//			IPv4 ip = (IPv4) eth.getPayload();
-//			IPv4Address dstIp = ip.getDestinationAddress();
-//			outPort = OFPort.of(Hosts.get(dstIp));
-//			Flows.simpleAdd(sw, pin, cntx, outPort);
-//			Flows.sendPacketOut(sw);
-//			return Command.STOP;
-//			return Command.CONTINUE;
-//		}
+		// if (pin.getInPort() == OFPort.of(3) || pin.getInPort() ==
+		// OFPort.of(4) || pin.getInPort() == OFPort.of(5)
+		// || pin.getInPort() == OFPort.of(6)) {
+		// outPort = OFPort.of(this.dispatch());
+		// final IPv4 iPv4Packet = (IPv4) eth.getPayload();
+		// final IPv4Address iPv4DestinationAddress =
+		// iPv4Packet.getDestinationAddress();
+		// Flows.simpleAdd(sw, pin, cntx, outPort);
+		// Flows.sendPacketOut(sw);
+		// return Command.STOP;
+		// } else {
+		// IPv4 ip = (IPv4) eth.getPayload();
+		// IPv4Address dstIp = ip.getDestinationAddress();
+		// outPort = OFPort.of(Hosts.get(dstIp));
+		// Flows.simpleAdd(sw, pin, cntx, outPort);
+		// Flows.sendPacketOut(sw);
+		// return Command.STOP;
+		// return Command.CONTINUE;
+		// }
 		if (eth.getEtherType() == EthType.IPv4) {
 			logger.info("got IPv4");
-            IPv4 ipv4 = (IPv4) eth.getPayload();
-             
-            /* More to come here */
-        } else if (eth.getEtherType() == EthType.ARP) {
-        	logger.info("got ARP");
-            ARP arp = (ARP) eth.getPayload();
-            IPv4Address senderAddress = arp.getSenderProtocolAddress();
-            MacAddress senderMAC = arp.getSenderHardwareAddress();
-            IPv4Address targetAddress = arp.getTargetProtocolAddress();
-//            MacAddress targetMAC = arp.getTargetHardwareAddress(); <- target address to 00:00:00:00:00:00
-//            logger.info(senderMAC.toString());
-            logger.info(MACs.get(targetAddress));
-  
-            /* More to come here */
-  
-        }
-        return Command.CONTINUE;
+			IPv4 ipv4 = (IPv4) eth.getPayload();
+
+			/* More to come here */
+		} else if (eth.getEtherType() == EthType.ARP) {
+			logger.info("got ARP");
+			ARP arp = (ARP) eth.getPayload();
+			IPv4Address senderAddress = arp.getSenderProtocolAddress();
+			MacAddress senderMAC = arp.getSenderHardwareAddress();
+			IPv4Address targetAddress = arp.getTargetProtocolAddress();
+			// MacAddress targetMAC = arp.getTargetHardwareAddress(); <- target
+			// address to 00:00:00:00:00:00
+			// logger.info(senderMAC.toString());
+			logger.info(targetAddress.toString());
+			IPv4Address serversAddress = dispatch();
+			logger.info(MACs.get(serversAddress));
+			OFPort outPort = OFPort.of(Hosts.get(serversAddress));
+			logger.info(outPort.toString());
+			Flows.simpleAdd(sw, pin, cntx, outPort);
+//			Flows.sendPacketOut(sw);
+
+			/* More to come here */
+
+		}
+		return Command.CONTINUE;
 
 	}
 
