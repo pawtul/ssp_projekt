@@ -49,40 +49,40 @@ public class Flows {
 		logger.info("Flows() begin/end");
 	}
 
-//	public static void sendPacketOut(IOFSwitch sw) {
-		// Ethernet
-//		Ethernet l2 = new Ethernet();
-//		l2.setSourceMACAddress(MacAddress.of("00:00:00:00:00:01"));
-//		l2.setDestinationMACAddress(MacAddress.BROADCAST);
-//		l2.setEtherType(EthType.IPv4);
-//		// IP
-//		IPv4 l3 = new IPv4();
-//		l3.setSourceAddress(IPv4Address.of("192.168.1.1"));
-//		l3.setDestinationAddress(IPv4Address.of("192.168.1.255"));
-//		l3.setTtl((byte) 64);
-//		l3.setProtocol(IpProtocol.UDP);
-//		// UDP
-//		UDP l4 = new UDP();
-//		l4.setSourcePort(TransportPort.of(65003));
-//		l4.setDestinationPort(TransportPort.of(53));
-//		// Layer 7 data
-//		Data l7 = new Data();
-//		l7.setData(new byte[1000]);
-//		// set the payloads of each layer
-//		l2.setPayload(l3);
-//		l3.setPayload(l4);
-//		l4.setPayload(l7);
-//		// serialize
-//		byte[] serializedData = l2.serialize();
-//		// Create Packet-Out and Write to Switch
-//		OFPacketOut po = sw.getOFFactory().buildPacketOut().setData(serializedData)
-//				.setActions(Collections
-//						.singletonList((OFAction) sw.getOFFactory().actions().output(OFPort.FLOOD, 0xffFFffFF)))
-//				.setInPort(OFPort.CONTROLLER).build();
-//		sw.write(po);
-//	}
+	public static void sendPacketOut(IOFSwitch sw) {
+//		 Ethernet
+		Ethernet l2 = new Ethernet();
+		l2.setSourceMACAddress(MacAddress.of("00:00:00:00:00:01"));
+		l2.setDestinationMACAddress(MacAddress.BROADCAST);
+		l2.setEtherType(EthType.IPv4);
+		// IP
+		IPv4 l3 = new IPv4();
+		l3.setSourceAddress(IPv4Address.of("192.168.1.1"));
+		l3.setDestinationAddress(IPv4Address.of("192.168.1.255"));
+		l3.setTtl((byte) 64);
+		l3.setProtocol(IpProtocol.UDP);
+		// UDP
+		UDP l4 = new UDP();
+		l4.setSourcePort(TransportPort.of(65003));
+		l4.setDestinationPort(TransportPort.of(53));
+		// Layer 7 data
+		Data l7 = new Data();
+		l7.setData(new byte[1000]);
+		// set the payloads of each layer
+		l2.setPayload(l3);
+		l3.setPayload(l4);
+		l4.setPayload(l7);
+		// serialize
+		byte[] serializedData = l2.serialize();
+		// Create Packet-Out and Write to Switch
+		OFPacketOut po = sw.getOFFactory().buildPacketOut().setData(serializedData)
+				.setActions(Collections
+						.singletonList((OFAction) sw.getOFFactory().actions().output(OFPort.FLOOD, 0xffFFffFF)))
+				.setInPort(OFPort.CONTROLLER).build();
+		sw.write(po);
+	}
 	
-	public static void sendPacketOut(IOFSwitch sw, MacAddress sourceMac, MacAddress destMac, IPv4Address sourceIP, IPv4Address destIP, OFMessage payload) {
+	public static void sendPacketOut(IOFSwitch sw, MacAddress sourceMac, MacAddress destMac, IPv4Address sourceIP, IPv4Address destIP) {
 //		 Ethernet
 		Ethernet l2 = new Ethernet();
 		l2.setSourceMACAddress(sourceMac);

@@ -1,17 +1,23 @@
 package pl.edu.agh.kt;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
 
 import org.projectfloodlight.openflow.protocol.OFMessage;
 import org.projectfloodlight.openflow.protocol.OFPacketIn;
+import org.projectfloodlight.openflow.protocol.OFPacketOut;
 import org.projectfloodlight.openflow.protocol.OFType;
+import org.projectfloodlight.openflow.protocol.action.OFAction;
+import org.projectfloodlight.openflow.types.ArpOpcode;
 import org.projectfloodlight.openflow.types.EthType;
 import org.projectfloodlight.openflow.types.IPv4Address;
 import org.projectfloodlight.openflow.types.IpDscp;
+import org.projectfloodlight.openflow.types.IpProtocol;
 import org.projectfloodlight.openflow.types.MacAddress;
 import org.projectfloodlight.openflow.types.OFPort;
+import org.projectfloodlight.openflow.types.TransportPort;
 
 import net.floodlightcontroller.core.FloodlightContext;
 import net.floodlightcontroller.core.IOFMessageListener;
@@ -21,9 +27,11 @@ import net.floodlightcontroller.core.module.FloodlightModuleException;
 import net.floodlightcontroller.core.module.IFloodlightModule;
 import net.floodlightcontroller.core.module.IFloodlightService;
 import net.floodlightcontroller.packet.ARP;
+import net.floodlightcontroller.packet.Data;
 import net.floodlightcontroller.packet.Ethernet;
 import net.floodlightcontroller.packet.IPacket;
 import net.floodlightcontroller.packet.IPv4;
+import net.floodlightcontroller.packet.UDP;
 import net.floodlightcontroller.core.IFloodlightProviderService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,9 +88,6 @@ public class SdnLabListener implements IFloodlightModule, IOFMessageListener {
 
 		// sending PacketOut
 		OFPacketIn pin = (OFPacketIn) msg;
-		logger.info("------------------------");
-		logger.info(msg.toString());
-		logger.info("------------------------");
 //		OFPort outPort = OFPort.of(0);
 		// // rozdzielanie ruchu
 		// TODO rozdzielis na ARP i IPv4
@@ -119,13 +124,41 @@ public class SdnLabListener implements IFloodlightModule, IOFMessageListener {
 			IPv4Address targetAddress = arp.getTargetProtocolAddress();
 			// MacAddress targetMAC = arp.getTargetHardwareAddress(); <- target
 			// address to 00:00:00:00:00:00
-			// logger.info(senderMAC.toString());
-			logger.info(targetAddress.toString());
-			IPv4Address serversAddress = dispatch();
-			logger.info(MACs.get(serversAddress));
-			OFPort outPort = OFPort.of(Hosts.get(serversAddress));
-			logger.info(outPort.toString());
-			Flows.simpleAdd(sw, pin, cntx, outPort);
+//			 logger.info(senderMAC.toString());
+			if (targetAddress.toString().equals("10.0.0.10")){
+				logger.info("asdasdasd");
+				logger.info(targetAddress.toString());
+				IPv4Address serversAddress = dispatch();
+				logger.info(MACs.get(serversAddress));
+				OFPort outPort = OFPort.of(Hosts.get(serversAddress));
+//				OFPort outPort = OFPort.of(Hosts.get(senderAddress));
+				logger.info(outPort.toString());
+				arp.setSenderHardwareAddress(MacAddress.of(MACs.get(serversAddress)));
+				arp.setSenderProtocolAddress(serversAddress);
+				arp.setOpCode(ArpOpcode.of(2));
+//				arp.setSenderHardwareAddress(MacAddress.of("00:00:00:00:00:15"));
+//				arp.setSenderProtocolAddress(targetAddress);
+				arp.setTargetHardwareAddress(senderMAC);
+				arp.setTargetProtocolAddress(senderAddress);
+				
+				OFPacketOut po = sw.getOFFactory().buildPacketOut().setData(arp.serialize())
+						.setActions(Collections
+								.singletonList((OFAction) sw.getOFFactory().actions().output(outPort, 0xffFFffFF)))
+						.setInPort(OFPort.CONTROLLER).build();
+				Flows.simpleAdd(sw, pin, cntx, outPort);
+				sw.write(po);
+			}else{
+//				arp.setSenderHardwareAddress(MacAddress.of(MACs.get(serversAddress)));
+				arp.setSenderProtocolAddress(IPv4Address.of("10.0.0.10"));
+				logger.info("reszta");
+				logger.info(targetAddress.toString());
+				
+				OFPacketOut po = sw.getOFFactory().buildPacketOut().setData(arp.serialize())
+						.setActions(Collections
+								.singletonList((OFAction) sw.getOFFactory().actions().output(OFPort.of(Hosts.get(arp.getTargetProtocolAddress())), 0xffFFffFF)))
+						.setInPort(OFPort.CONTROLLER).build();
+				sw.write(po);
+			}
 //			Flows.sendPacketOut(sw);
 
 			/* More to come here */
@@ -143,7 +176,7 @@ public class SdnLabListener implements IFloodlightModule, IOFMessageListener {
 		// max to 100
 		int max = 100;
 		int load1 = rn.nextInt(100) % max;
-		int load2 = rn.nextInt(100) % max;
+		int load2 = rn.nextInt(100) % max + 100;
 		logger.info("Load1 is equal {}% load2 is equal {}%", load1, load2);
 		IPv4Address outPort;
 		if (load1 <= load2)
